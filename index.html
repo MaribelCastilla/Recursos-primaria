@@ -1,0 +1,700 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>España: Geografía Física</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--sun:#ffd166;--coral:#ef6c6c;--mint:#06d6a0;--purple:#8b5cf6;--shadow:0 4px 20px rgba(0,0,0,0.12)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#dbeafe,#e0f2fe,#f0fdf4);min-height:100vh;overflow-x:hidden}
+header{background:linear-gradient(90deg,#1e40af,#0ea5e9,#06b6d4);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 15px rgba(0,0,0,0.2)}
+header h1{font-family:'Fredoka One',cursive;color:white;font-size:1.8rem;text-shadow:2px 2px 4px rgba(0,0,0,0.3)}
+.game-layout{display:flex;gap:12px;padding:12px;max-width:1400px;margin:0 auto;align-items:flex-start}
+.panel-left,.panel-right{width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:10px}
+.map-section{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.card{background:white;border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+.card h3{font-family:'Fredoka One',cursive;font-size:1rem;margin-bottom:8px;color:#1e40af}
+/* Streak */
+.streak-num{font-family:'Fredoka One',cursive;font-size:3rem;color:var(--sun);line-height:1;text-shadow:2px 2px 0 #f59e0b;text-align:center}
+.streak-label{font-size:0.8rem;color:#64748b;font-weight:700;text-align:center}
+/* Timer */
+.timer-wrap{text-align:center}
+.timer-num{font-family:'Fredoka One',cursive;font-size:2rem;color:#1e40af}
+.timer-toggle{background:#e0f2fe;border:none;border-radius:20px;padding:4px 10px;font-family:'Nunito',sans-serif;font-size:0.75rem;font-weight:700;color:#0369a1;cursor:pointer;margin-top:4px}
+/* Stats */
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:0.8rem}
+.stat-val{font-family:'Fredoka One',cursive;font-size:1.1rem}
+/* Category progress */
+.cat-item{display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #e2e8f0;font-size:0.78rem;font-weight:700}
+.cat-item:last-child{border-bottom:none}
+.cat-dot{width:10px;height:10px;border-radius:50%;margin-right:5px;flex-shrink:0}
+.cat-name{flex:1;color:#374151}
+.cat-progress{color:#6b7280;font-size:0.72rem}
+.progress-bar-wrap{background:#e2e8f0;border-radius:10px;height:8px;overflow:hidden;margin-top:4px}
+.progress-bar-fill{height:100%;border-radius:10px;transition:width 0.4s ease}
+/* Best session grid */
+.best-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.best-cell{border-radius:10px;padding:8px;text-align:center}
+.best-val{font-family:'Fredoka One',cursive;font-size:1.4rem;line-height:1.1}
+.best-lbl{font-size:0.62rem;color:#64748b;font-weight:700;margin-top:2px}
+/* Question box */
+.question-box{background:linear-gradient(135deg,#1e40af,#0ea5e9);border-radius:20px;padding:14px 20px;color:white;text-align:center;box-shadow:0 4px 15px rgba(14,165,233,0.4);position:relative;overflow:hidden}
+.question-category{font-size:0.75rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;opacity:0.8;margin-bottom:4px}
+.question-text{font-family:'Fredoka One',cursive;font-size:1.5rem;line-height:1.2}
+.attempts-dots{display:flex;justify-content:center;gap:8px;margin-top:8px}
+.dot{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,0.9);border:2px solid rgba(255,255,255,0.5);transition:all 0.3s}
+.dot.used{background:rgba(255,100,100,0.8)}
+.btn-skip{background:#fef3c7;border:2px solid #fcd34d;border-radius:12px;padding:6px 14px;font-family:'Nunito',sans-serif;font-weight:800;color:#92400e;cursor:pointer;font-size:0.85rem;margin-top:8px}
+/* Map */
+.map-container{position:relative;width:100%;border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.2);cursor:crosshair;border:3px solid white}
+.map-container img{width:100%;display:block;user-select:none;pointer-events:none}
+/* Zones */
+.click-zone{position:absolute;border-radius:50%;cursor:crosshair;background:transparent;transform:translate(-50%,-50%);transition:background 0.2s}
+.click-zone.debug-zone{background:rgba(255,80,80,0.25);border:2px dashed rgba(255,255,255,0.8)}
+.click-segment{position:absolute;cursor:crosshair;background:transparent;transform-origin:center;transition:background 0.2s}
+.click-segment.debug-zone{background:rgba(80,180,255,0.3);border:2px dashed rgba(255,255,255,0.8)}
+.debug-label{position:absolute;transform:translate(-50%,-50%);font-size:0.55rem;font-weight:900;color:white;text-shadow:0 0 3px black,0 0 3px black;pointer-events:none;white-space:nowrap;z-index:30;display:none;background:rgba(0,0,0,0.5);padding:1px 4px;border-radius:4px}
+/* Hint */
+.hint-glow{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,215,0,0.7) 0%,rgba(255,215,0,0) 70%);width:100px;height:100px;animation:pulse-hint 1s ease-in-out infinite;display:none;z-index:20}
+@keyframes pulse-hint{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.8}50%{transform:translate(-50%,-50%) scale(1.4);opacity:1}}
+/* Pins */
+.map-pin{position:absolute;transform:translate(-50%,-100%);pointer-events:none;z-index:15;animation:pin-drop 0.4s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes pin-drop{from{transform:translate(-50%,-140%) scale(0);opacity:0}to{transform:translate(-50%,-100%) scale(1);opacity:1}}
+.pin-bubble{background:white;border:2px solid var(--mint);border-radius:12px;padding:2px 7px;font-size:0.65rem;font-weight:800;color:#065f46;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.pin-bubble.wrong-pin{border-color:var(--coral);color:#991b1b}
+/* Flash */
+.flash-overlay{position:fixed;inset:0;pointer-events:none;z-index:100;opacity:0;transition:opacity 0.15s}
+.flash-overlay.flash-wrong{background:rgba(239,68,68,0.3)}
+.flash-overlay.flash-right{background:rgba(6,214,160,0.3)}
+.flash-overlay.active{opacity:1}
+/* Result overlay */
+.result-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;z-index:200;display:none}
+.result-card{background:white;border-radius:24px;padding:40px;text-align:center;max-width:360px;animation:bounce-in 0.5s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes bounce-in{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
+.result-emoji{font-size:4rem;margin-bottom:10px}
+.result-title{font-family:'Fredoka One',cursive;font-size:2rem;color:#1e40af;margin-bottom:8px}
+.result-msg{color:#64748b;font-weight:600;margin-bottom:20px;line-height:1.6}
+.btn-play-again{background:linear-gradient(135deg,#0ea5e9,#6366f1);color:white;border:none;border-radius:16px;padding:14px 32px;font-family:'Fredoka One',cursive;font-size:1.3rem;cursor:pointer;box-shadow:0 4px 15px rgba(99,102,241,0.4)}
+/* Calibration */
+.btn-debug{width:100%;background:#1e293b;color:#94a3b8;border:2px solid #334155;border-radius:10px;padding:7px 10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.82rem;cursor:pointer;transition:all 0.2s}
+.btn-debug:hover{background:#334155;color:white}
+.btn-debug.active{background:#0f172a;color:#fbbf24;border-color:#fbbf24}
+.btn-calibrate{width:100%;background:#7c3aed;color:white;border:none;border-radius:10px;padding:7px 10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.82rem;cursor:pointer;margin-top:6px}
+.btn-calibrate.active{background:#f59e0b;color:#1c1917}
+.calibration-banner{display:none;position:absolute;top:0;left:0;right:0;background:rgba(124,58,237,0.92);color:white;font-family:'Fredoka One',cursive;font-size:0.95rem;padding:8px 12px;z-index:50;text-align:center}
+.calibration-banner.active{display:block}
+.calib-dot{position:absolute;pointer-events:none;z-index:55}
+.calib-dot-inner{width:10px;height:10px;background:#f59e0b;border:2px solid white;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 6px rgba(0,0,0,0.5)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;display:none;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal-card{background:#1e293b;border-radius:16px;padding:20px;max-width:90vw;width:500px;max-height:80vh;overflow-y:auto}
+.modal-card h2{font-family:'Fredoka One',cursive;color:#f59e0b;margin-bottom:10px;font-size:1.2rem}
+.modal-card textarea{width:100%;background:#0f172a;color:#a3e635;border:1px solid #334155;border-radius:8px;padding:10px;font-family:monospace;font-size:0.72rem;height:180px;resize:none}
+.modal-btn-row{display:flex;gap:8px;margin-top:10px}
+.modal-btn-row button{flex:1;padding:10px;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.85rem;cursor:pointer}
+.btn-copy{background:#0ea5e9;color:white}
+.btn-close{background:#475569;color:white}
+@media(max-width:900px){.game-layout{flex-wrap:wrap}.panel-left,.panel-right{width:100%;flex-direction:row;flex-wrap:wrap}.card{flex:1;min-width:150px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🗺️ España: Geografía Física</h1>
+  <div style="font-size:1.5rem">⭐🌍⭐</div>
+</header>
+<div class="flash-overlay" id="flashOverlay"></div>
+
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-title" id="resultTitle">Fin</div>
+    <div class="result-msg" id="resultMsg"></div>
+    <button class="btn-play-again" onclick="startGame()">Jugar de nuevo 🚀</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="calibModal">
+  <div class="modal-card">
+    <h2>✅ Coordenadas calibradas</h2>
+    <p style="color:#94a3b8;font-size:0.8rem;margin-bottom:8px">Copia y pega esto en el chat con Claude:</p>
+    <textarea id="calibText" readonly></textarea>
+    <div class="modal-btn-row">
+      <button class="btn-copy" onclick="copyCalib()">📋 Copiar</button>
+      <button class="btn-close" onclick="closeCalib()">✖ Cerrar y jugar</button>
+    </div>
+  </div>
+</div>
+
+<div class="game-layout">
+  <!-- LEFT PANEL -->
+  <div class="panel-left">
+    <div class="card">
+      <h3>🔥 Racha</h3>
+      <div class="streak-num" id="streakNum">0</div>
+      <div class="streak-label">aciertos seguidos</div>
+    </div>
+    <div class="card timer-wrap">
+      <h3>⏱️ Tiempo</h3>
+      <div class="timer-num" id="timerNum">45</div>
+      <svg width="60" height="60" viewBox="0 0 60 60" style="display:block;margin:0 auto 4px">
+        <circle cx="30" cy="30" r="26" fill="none" stroke="#e2e8f0" stroke-width="6"/>
+        <circle id="timerArc" cx="30" cy="30" r="26" fill="none" stroke="#0ea5e9" stroke-width="6"
+          stroke-dasharray="163.4" stroke-dashoffset="0" stroke-linecap="round"
+          transform="rotate(-90 30 30)" style="transition:stroke-dashoffset 1s linear,stroke 0.3s"/>
+      </svg>
+      <div style="font-size:0.7rem;color:#64748b;font-weight:700;margin-top:2px">Sesión: <span id="sessionTime">0s</span></div>
+      <button class="timer-toggle" id="timerToggle" onclick="toggleTimer()">⏸ Pausar</button>
+    </div>
+    <div class="card">
+      <h3>📊 Stats</h3>
+      <div class="stat-row"><span>Aciertos</span><span class="stat-val" id="statCorrect" style="color:var(--mint)">0</span></div>
+      <div class="stat-row"><span>Fallos</span><span class="stat-val" id="statWrong" style="color:var(--coral)">0</span></div>
+      <div class="stat-row"><span>Total</span><span class="stat-val" id="statTotal" style="color:var(--purple)">0</span></div>
+    </div>
+  </div>
+
+  <!-- MAP SECTION -->
+  <div class="map-section">
+    <div class="question-box">
+      <div class="question-category" id="qCategory">CATEGORÍA</div>
+      <div class="question-text" id="qText">Cargando...</div>
+      <div class="attempts-dots">
+        <div class="dot" id="dot0"></div>
+        <div class="dot" id="dot1"></div>
+      </div>
+      <button class="btn-skip" onclick="skipQuestion()">⏭ Saltar pregunta</button>
+    </div>
+    <div class="map-container" id="mapContainer">
+      <div class="calibration-banner" id="calibBanner">
+        📍 Haz clic en: <strong id="calibTarget">...</strong>
+        &nbsp;(<span id="calibIdx">0</span>/<span id="calibTotal">0</span>)
+        &nbsp;<button onclick="skipCalibItem()" style="background:rgba(255,255,255,0.3);border:none;border-radius:6px;color:white;font-weight:800;cursor:pointer;padding:2px 8px;font-size:0.8rem">Saltar</button>
+      </div>
+      <img src="mapa.jpg" alt="Mapa físico de España" draggable="false">
+      <div class="hint-glow" id="hintGlow"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel-right">
+    <div class="card">
+      <h3>🌟 Mejor sesión</h3>
+      <div id="bestSessionContent">
+        <p style="font-size:0.75rem;color:#94a3b8;text-align:center;padding:4px 0">Completa una partida<br>para ver tu récord</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🏅 Progreso</h3>
+      <div id="categoryProgress"></div>
+    </div>
+    <div class="card">
+      <h3>🔧 Debug</h3>
+      <button class="btn-debug" id="debugBtn" onclick="toggleDebug()">🔍 Ver zonas</button>
+      <p style="font-size:0.7rem;color:#94a3b8;margin-top:4px">Muestra áreas de clic</p>
+      <button class="btn-calibrate" id="calibBtn" onclick="startCalibration()">📍 Calibrar zonas</button>
+      <p style="font-size:0.7rem;color:#94a3b8;margin-top:4px">Haz clic para recolocar cada zona</p>
+    </div>
+    <div class="card">
+      <h3>💡 Instrucciones</h3>
+      <p style="font-size:0.75rem;color:#64748b;line-height:1.5">
+        Lee la pregunta y haz clic en el mapa. Tienes <strong>2 intentos</strong>.
+        Al 2º fallo aparece una pista ✨
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const ELEMENTS = [
+  { id:"mino", name:"Río Miño", cat:"Ríos", tipo:"line", points:[[22.7,24.4],[26.3,23.2],[29.4,19.3],[33,20.3],[35.3,17.5]], r:3 },
+  { id:"duero", name:"Río Duero", cat:"Ríos", tipo:"line", points:[[23.7,32.3],[28.1,33],[31.8,33.1],[34.5,31.7],[38,28.5],[41.1,28.9],[44.3,29.6],[49.4,27.6]], r:3 },
+  { id:"tajo", name:"Río Tajo", cat:"Ríos", tipo:"line", points:[[20.9,54.1],[24.5,48.8],[30.4,47],[35.3,46.6],[40.3,46.3],[45.8,45],[50.5,43.8],[52.5,39.5],[51,35.4]], r:3 },
+  { id:"guadiana", name:"Río Guadiana", cat:"Ríos", tipo:"line", points:[[29.4,71.9],[28.1,66.4],[30.6,58],[34.2,55],[39.3,54.5],[44,51.1],[47.4,55.2],[51.2,52.3]], r:3 },
+  { id:"guadalquivir", name:"Río Guadalquivir", cat:"Ríos", tipo:"line", points:[[35.2,75.4],[38.2,67.8],[43.5,65.5],[47.4,63.7],[52.3,65.3],[54.2,63]], r:3 },
+  { id:"segura", name:"Río Segura", cat:"Ríos", tipo:"line", points:[[60.3,58],[61.5,60],[63.5,61.9],[64.4,64.2],[66.8,62.6],[68.1,61.6]], r:3 },
+  { id:"jucar", name:"Río Júcar", cat:"Ríos", tipo:"line", points:[[56.1,40.8],[56.4,44.5],[58.2,47],[59.2,49.3],[59.6,52.5],[61.3,53],[64.5,51.8],[68,51.4],[69.5,52.1]], r:3 },
+  { id:"ebro", name:"Río Ebro", cat:"Ríos", tipo:"line", points:[[48.5,14.7],[51.1,16.6],[54.3,17.7],[56.9,20.5],[60.8,23],[63.5,26.4],[65.9,28.5],[69.8,31],[72,30.3],[73.4,33.1],[74.3,37]], r:3 },
+  { id:"cantabrica", name:"Cordillera Cantábrica", cat:"Cordilleras", tipo:"line", points:[[33.6,14.8],[42.5,14.3],[56.5,15.9]], r:4 },
+  { id:"pirineos", name:"Pirineos", cat:"Cordilleras", tipo:"line", points:[[63,14.7],[74.2,18.4],[82.9,18.4]], r:4 },
+  { id:"s_central", name:"Sistema Central", cat:"Cordilleras", tipo:"line", points:[[37.9,42.6],[45.7,39.9],[51.1,34.6]], r:4 },
+  { id:"s_iberico", name:"Sistema Ibérico", cat:"Cordilleras", tipo:"line", points:[[52.5,23.5],[59,31.7],[62.6,42.4],[65.5,39]], r:4 },
+  { id:"m_toledo", name:"Montes de Toledo", cat:"Cordilleras", tipo:"line", points:[[44.4,49.5],[50.1,49.8]], r:4 },
+  { id:"guadarrama", name:"Sierra de Guadarrama", cat:"Cordilleras", tipo:"line", points:[[47.8,38.5],[52.8,34]], r:3 },
+  { id:"s_morena", name:"Sierra Morena", cat:"Cordilleras", tipo:"line", points:[[35.7,63.5],[42.2,59.1],[48,58.2]], r:4 },
+  { id:"subbetica", name:"Cordillera Subbética", cat:"Cordilleras", tipo:"line", points:[[42.2,75.2],[50.3,72.9],[57.8,72.6]], r:4 },
+  { id:"penibética", name:"Cordillera Penibética", cat:"Cordilleras", tipo:"line", points:[[48.9,68],[57,67.2],[56.8,61.2]], r:4 },
+  { id:"picos_eu", name:"Picos de Europa", cat:"Picos", tipo:"point", x:40.5, y:17.2, r:5 },
+  { id:"almanzor", name:"Pico Almanzor", cat:"Picos", tipo:"point", x:42, y:40.6, r:4 },
+  { id:"veleta", name:"Pico Veleta", cat:"Picos", tipo:"point", x:51.1, y:73.6, r:4 },
+  { id:"mulhacen", name:"Pico Mulhacén", cat:"Picos", tipo:"point", x:53.3, y:72.9, r:4 },
+  { id:"aneto", name:"Pico Aneto", cat:"Picos", tipo:"point", x:70.8, y:16.8, r:4 },
+  { id:"teide", name:"Pico Teide", cat:"Picos", tipo:"point", x:12.9, y:91.8, r:5 },
+  { id:"c_ortegal", name:"Cabo Ortegal", cat:"Costa", tipo:"point", x:27.6, y:7.4, r:4 },
+  { id:"c_finisterre", name:"Cabo Finisterre", cat:"Costa", tipo:"point", x:21.1, y:15, r:4 },
+  { id:"c_gata", name:"Cabo de Gata", cat:"Costa", tipo:"point", x:59.2, y:76.8, r:4 },
+  { id:"c_palos", name:"Cabo de Palos", cat:"Costa", tipo:"point", x:67.5, y:67.6, r:4 },
+  { id:"c_nao", name:"Cabo de la Nao", cat:"Costa", tipo:"point", x:72.1, y:56.2, r:4 },
+  { id:"c_creus", name:"Cabo de Creus", cat:"Costa", tipo:"point", x:87.3, y:19.5, r:4 },
+  { id:"g_vizcaya", name:"Golfo de Vizcaya", cat:"Costa", tipo:"point", x:58.5, y:9.3, r:6 },
+  { id:"g_cadiz", name:"Golfo de Cádiz", cat:"Costa", tipo:"point", x:31.8, y:74.5, r:5 },
+  { id:"g_valencia", name:"Golfo de Valencia", cat:"Costa", tipo:"point", x:70.8, y:49.7, r:6 },
+  { id:"delta_ebro", name:"Delta del Ebro", cat:"Costa", tipo:"point", x:74.9, y:37.8, r:4 },
+  { id:"estrecho", name:"Estrecho de Gibraltar", cat:"Costa", tipo:"point", x:39.7, y:84.3, r:5 },
+  { id:"mar_cant", name:"Mar Cantábrico", cat:"Aguas", tipo:"point", x:45.1, y:8.1, r:7 },
+  { id:"mar_med", name:"Mar Mediterráneo", cat:"Aguas", tipo:"point", x:78.3, y:46.3, r:12 },
+  { id:"atl_oc", name:"Océano Atlántico", cat:"Aguas", tipo:"point", x:8.6, y:43.1, r:11 },
+];
+
+const CAT_COLORS = {
+  'Ríos':'#3b82f6','Cordilleras':'#92400e','Picos':'#6b7280','Costa':'#f59e0b','Aguas':'#06b6d4'
+};
+const CAT_EMOJIS = {
+  'Ríos':'🟦','Cordilleras':'🟫','Picos':'⛰️','Costa':'🟨','Aguas':'🌊'
+};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let queue=[], current=null, attempts=0, streak=0, maxStreak=0;
+let totalCorrect=0, totalWrong=0, totalAnswered=0;
+let catStats={};
+let timerEnabled=true, timerValue=45, timerInterval=null;
+let sessionStartTime=0, sessionElapsed=0, sessionTimerInterval=null;
+let bestSession=null;
+let debugMode=false;
+let calibMode=false, calibQueue=[], calibIdx=0, calibResults={}, calibDots=[], calibLinePoints=[];
+let gameOver=false;
+let hintTimeout=null;
+let isTransitioning=false;
+
+// ═══════════════════════════════════════════════
+// HIT DETECTION
+// ═══════════════════════════════════════════════
+function hitTest(el, px, py) {
+  if (el.tipo === 'point') {
+    const dx=px-el.x, dy=py-el.y;
+    return Math.sqrt(dx*dx+dy*dy) <= Math.max(el.r,5);
+  }
+  const r=Math.max(el.r,4);
+  for (let i=0;i<el.points.length-1;i++) {
+    const [ax,ay]=el.points[i],[bx,by]=el.points[i+1];
+    if (distSeg(px,py,ax,ay,bx,by)<=r) return true;
+  }
+  for (const [px2,py2] of el.points) {
+    if (Math.sqrt((px-px2)**2+(py-py2)**2)<=r) return true;
+  }
+  return false;
+}
+function distSeg(px,py,ax,ay,bx,by) {
+  const dx=bx-ax,dy=by-ay,lenSq=dx*dx+dy*dy;
+  if (!lenSq) return Math.sqrt((px-ax)**2+(py-ay)**2);
+  const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/lenSq));
+  return Math.sqrt((px-(ax+t*dx))**2+(py-(ay+t*dy))**2);
+}
+function getCenter(el) {
+  if (el.tipo==='point') return [el.x,el.y];
+  const pts=el.points, mid=pts[Math.floor(pts.length/2)];
+  return [mid[0],mid[1]];
+}
+
+// ═══════════════════════════════════════════════
+// ZONES
+// ═══════════════════════════════════════════════
+function setupZones() {
+  const map=document.getElementById('mapContainer');
+  document.querySelectorAll('.click-zone,.click-segment,.debug-label').forEach(z=>z.remove());
+  for (const el of ELEMENTS) {
+    if (el.tipo==='point') {
+      const z=document.createElement('div');
+      z.className='click-zone'; z.id='zone-'+el.id;
+      z.style.left=el.x+'%'; z.style.top=el.y+'%';
+      z.style.width=(el.r*2)+'%'; z.style.height=(el.r*2)+'%';
+      if(debugMode) z.classList.add('debug-zone');
+      map.appendChild(z);
+    } else {
+      for (let i=0;i<el.points.length-1;i++) {
+        const [ax,ay]=el.points[i],[bx,by]=el.points[i+1];
+        const len=Math.sqrt((bx-ax)**2+(by-ay)**2);
+        const angle=Math.atan2(by-ay,bx-ax)*180/Math.PI;
+        const cx=(ax+bx)/2,cy=(ay+by)/2;
+        const seg=document.createElement('div');
+        seg.className='click-segment'; seg.dataset.elId=el.id;
+        seg.style.left=cx+'%'; seg.style.top=cy+'%';
+        seg.style.width=len+'%'; seg.style.height=(el.r*2)+'%';
+        seg.style.transform='translate(-50%,-50%) rotate('+angle+'deg)';
+        seg.style.borderRadius=el.r+'%';
+        if(debugMode) seg.classList.add('debug-zone');
+        map.appendChild(seg);
+      }
+      for (const [x,y] of el.points) {
+        const d=document.createElement('div');
+        d.className='click-zone'; d.dataset.elId=el.id;
+        d.style.left=x+'%'; d.style.top=y+'%';
+        d.style.width=(el.r*2)+'%'; d.style.height=(el.r*2)+'%';
+        if(debugMode) d.classList.add('debug-zone');
+        map.appendChild(d);
+      }
+    }
+    const [cx,cy]=getCenter(el);
+    const lbl=document.createElement('div');
+    lbl.className='debug-label';
+    lbl.style.left=cx+'%'; lbl.style.top=cy+'%';
+    lbl.textContent=el.name;
+    if(debugMode) lbl.style.display='block';
+    map.appendChild(lbl);
+  }
+}
+function toggleDebug() {
+  debugMode=!debugMode;
+  const btn=document.getElementById('debugBtn');
+  btn.classList.toggle('active',debugMode);
+  btn.textContent=debugMode?'✅ Zonas visibles':'🔍 Ver zonas';
+  document.querySelectorAll('.click-zone,.click-segment').forEach(z=>z.classList.toggle('debug-zone',debugMode));
+  document.querySelectorAll('.debug-label').forEach(l=>l.style.display=debugMode?'block':'none');
+}
+
+// ═══════════════════════════════════════════════
+// MAP CLICK
+// ═══════════════════════════════════════════════
+function setupMapClick() {
+  setupZones();
+  const map=document.getElementById('mapContainer');
+  map.addEventListener('click',function(e) {
+    const rect=map.getBoundingClientRect();
+    const px=((e.clientX-rect.left)/rect.width)*100;
+    const py=((e.clientY-rect.top)/rect.height)*100;
+    if (calibMode) { handleCalibClick(px,py); return; }
+    if (!current||gameOver||isTransitioning) return;
+    if (hitTest(current,px,py)) handleCorrect(px,py);
+    else handleWrong(px,py);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// GAME LOGIC
+// ═══════════════════════════════════════════════
+function handleCorrect(px,py) {
+  isTransitioning=true;
+  if (hintTimeout) {
+    clearTimeout(hintTimeout);
+    hintTimeout = null;
+  }
+  stopTimer();
+  streak++; totalCorrect++; totalAnswered++;
+  if(streak>maxStreak) maxStreak=streak;
+  if(catStats[current.cat]) catStats[current.cat].correct++;
+  flashScreen('right');
+  const [cx,cy]=getCenter(current);
+  dropPin(cx,cy,current.name,true);
+  updateStats(); renderCategoryProgress();
+  setTimeout(nextQuestion,1000);
+}
+function handleWrong(px,py) {
+  if (attempts >=2 ) return;
+  
+  attempts++; totalWrong++; streak=0;
+  if(attempts===1) {
+    document.getElementById('dot0').classList.add('used');
+  } else {
+    document.getElementById('dot1').classList.add('used');
+    showHint();
+    totalAnswered++;
+    updateStats(); renderCategoryProgress();
+    stopTimer();
+    
+    // Temporizador en variable
+    hintTimeout = setTimeout(()=>{
+      const [cx,cy]=getCenter(current);
+      dropPin(cx,cy,current.name,false);
+      setTimeout(nextQuestion,1500);
+    },3000);
+  }
+  flashScreen('wrong');
+  updateStats();
+}
+
+function startGame() {
+  isTransitioning=false;
+  document.getElementById('resultOverlay').style.display='none';
+  queue=shuffle([...ELEMENTS]);
+  current=null; attempts=0; streak=0; maxStreak=0;
+  totalCorrect=0; totalWrong=0; totalAnswered=0;
+  gameOver=false;
+  catStats={};
+  for (const e of ELEMENTS) {
+    if(!catStats[e.cat]) catStats[e.cat]={total:0,correct:0};
+    catStats[e.cat].total++;
+  }
+  document.querySelectorAll('.map-pin').forEach(p=>p.remove());
+  hideHint();
+  sessionElapsed=0; sessionStartTime=Date.now();
+  if(sessionTimerInterval) clearInterval(sessionTimerInterval);
+  sessionTimerInterval=setInterval(()=>{
+    sessionElapsed=Math.floor((Date.now()-sessionStartTime)/1000);
+    updateSessionTimeDisplay();
+  },1000);
+  renderCategoryProgress();
+  updateStats();
+  nextQuestion();
+}
+function shuffle(arr) {
+  for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
+}
+function nextQuestion() {
+  if(queue.length===0){endGame();return;}
+  isTransitioning=false;
+  current=queue.pop();
+  attempts=0;
+  hideHint();
+  document.getElementById('dot0').classList.remove('used');
+  document.getElementById('dot1').classList.remove('used');
+  document.getElementById('qCategory').textContent=CAT_EMOJIS[current.cat]+' '+current.cat.toUpperCase();
+  document.getElementById('qText').textContent='¿Dónde está '+current.name+'?';
+  startTimer();
+}
+function skipQuestion() {
+  if (hintTimeout) {
+    clearTimeout(hintTimeout);
+    hintTimeout = null;
+  }
+  
+  stopTimer();
+  if(queue.length>0) queue.unshift(current);
+  nextQuestion();
+}
+function showHint() {
+  const [cx,cy]=getCenter(current);
+  const h=document.getElementById('hintGlow');
+  h.style.left=cx+'%'; h.style.top=cy+'%'; h.style.display='block';
+}
+function hideHint(){document.getElementById('hintGlow').style.display='none';}
+function dropPin(x,y,name,correct) {
+  const map=document.getElementById('mapContainer');
+  const pin=document.createElement('div');
+  pin.className='map-pin'; pin.style.left=x+'%'; pin.style.top=y+'%';
+  const b=document.createElement('div');
+  b.className='pin-bubble'+(correct?'':' wrong-pin');
+  b.textContent=(correct?'✅ ':'❌ ')+name;
+  pin.appendChild(b); map.appendChild(pin);
+  setTimeout(()=>{pin.style.transition='opacity 0.6s';pin.style.opacity='0';setTimeout(()=>pin.remove(),700);},3500);
+}
+function flashScreen(type) {
+  const el=document.getElementById('flashOverlay');
+  el.className='flash-overlay flash-'+type+' active';
+  setTimeout(()=>el.classList.remove('active'),300);
+}
+
+// ═══════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════
+function startTimer() {
+  stopTimer();
+  if(!timerEnabled) return;
+  timerValue=45; updateTimerUI();
+  timerInterval=setInterval(()=>{
+    timerValue--; updateTimerUI();
+    if(timerValue<=0){stopTimer();handleTimerExpired();}
+  },1000);
+}
+function stopTimer(){if(timerInterval){clearInterval(timerInterval);timerInterval=null;}}
+
+function handleTimerExpired() {
+  isTransitioning=true;
+  totalAnswered++; streak=0;
+  showHint(); updateStats(); renderCategoryProgress();
+  const [cx,cy]=getCenter(current);
+  dropPin(cx,cy,current.name,false);
+  setTimeout(nextQuestion,2500);
+}
+function toggleTimer() {
+  timerEnabled=!timerEnabled;
+  document.getElementById('timerToggle').textContent=timerEnabled?'⏸ Pausar':'▶ Activar';
+  if(timerEnabled) startTimer();
+  else {stopTimer();document.getElementById('timerNum').textContent='∞';document.getElementById('timerArc').style.strokeDashoffset='0';}
+}
+function updateTimerUI() {
+  const num=document.getElementById('timerNum'), arc=document.getElementById('timerArc');
+  num.textContent=timerValue;
+  arc.style.strokeDashoffset=163.4*(1-timerValue/45);
+  const color=timerValue<=10?'#ef4444':timerValue<=20?'#f59e0b':'#0ea5e9';
+  arc.style.stroke=color;
+  num.style.color=timerValue<=10?'#ef4444':timerValue<=20?'#f59e0b':'#1e40af';
+}
+function updateSessionTimeDisplay() {
+  const m=Math.floor(sessionElapsed/60),s=sessionElapsed%60;
+  document.getElementById('sessionTime').textContent=(m>0?m+'m ':'')+s+'s';
+}
+
+// ═══════════════════════════════════════════════
+// STATS & PROGRESS
+// ═══════════════════════════════════════════════
+function updateStats() {
+  document.getElementById('streakNum').textContent=streak;
+  document.getElementById('statCorrect').textContent=totalCorrect;
+  document.getElementById('statWrong').textContent=totalWrong;
+  document.getElementById('statTotal').textContent=totalAnswered;
+}
+function renderCategoryProgress() {
+  const container=document.getElementById('categoryProgress');
+  container.innerHTML='';
+  for (const [cat,data] of Object.entries(catStats)) {
+    const pct=data.total>0?(data.correct/data.total)*100:0;
+    const color=CAT_COLORS[cat]||'#888';
+    let icon='';
+    if(totalAnswered>0) {
+      if(pct===100) icon='🥇';
+      else if(pct>=80) icon='🥈';
+      else if(pct>=60) icon='🥉';
+      else if(pct>0&&pct<50) icon='⚠️';
+      else if(pct===0&&totalAnswered>=data.total) icon='❗';
+    }
+    container.innerHTML+=
+      '<div class="cat-item">'
+      +'<div class="cat-dot" style="background:'+color+'"></div>'
+      +'<div class="cat-name">'+cat+'</div>'
+      +(icon?'<span style="font-size:0.9rem;margin-right:2px">'+icon+'</span>':'')
+      +'<div class="cat-progress">'+data.correct+'/'+data.total+'</div>'
+      +'</div>'
+      +'<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+pct+'%;background:'+color+'"></div></div>';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// END GAME & BEST SESSION
+// ═══════════════════════════════════════════════
+function endGame() {
+  stopTimer();
+  if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}
+  sessionElapsed=Math.floor((Date.now()-sessionStartTime)/1000);
+  gameOver=true;
+
+  const pct=Math.round((totalCorrect/ELEMENTS.length)*100);
+  let emoji='😊',title='¡Qué pasada, bien hecho!';
+  if(pct>=95){emoji='🏆';title='¡Lo has hecho genial!';}
+  else if(pct>=80){emoji='⭐';title='¡Sigue practicando, estás imparable!';}
+  else if(pct>=70){emoji='💪';title='¡Sigue practicando, estás en racha!';}
+  else{emoji='📚';title='¡A estudiar!';}
+
+  const m=Math.floor(sessionElapsed/60),s=sessionElapsed%60;
+  const tStr=(m>0?m+'m ':'')+s+'s';
+  document.getElementById('resultEmoji').textContent=emoji;
+  document.getElementById('resultTitle').textContent=title;
+  document.getElementById('resultMsg').innerHTML=
+    'Aciertos: <strong>'+totalCorrect+'</strong> &nbsp;|&nbsp; Fallos: <strong>'+totalWrong+'</strong><br>'
+    +'Racha máxima: <strong>'+maxStreak+'</strong> &nbsp;|&nbsp; Tiempo: <strong>'+tStr+'</strong>';
+  document.getElementById('resultOverlay').style.display='flex';
+
+  // Update best session if improved
+  const better=!bestSession
+    ||totalCorrect>(bestSession.correct||0)
+    ||(totalCorrect===bestSession.correct&&totalWrong<bestSession.fallos)
+    ||(totalCorrect===bestSession.correct&&totalWrong===bestSession.fallos&&sessionElapsed<bestSession.elapsed);
+  if(better){
+    bestSession={correct:totalCorrect,fallos:totalWrong,racha:maxStreak,elapsed:sessionElapsed};
+    renderBestSession();
+  }
+}
+function renderBestSession() {
+  if(!bestSession) return;
+  const m=Math.floor(bestSession.elapsed/60),s=bestSession.elapsed%60;
+  const tStr=(m>0?m+'m ':'')+s+'s';
+  document.getElementById('bestSessionContent').innerHTML=
+    '<div class="best-grid">'
+    +'<div class="best-cell" style="background:#f0fdf4"><div class="best-val" style="color:#16a34a">'+bestSession.correct+'</div><div class="best-lbl">ACIERTOS</div></div>'
+    +'<div class="best-cell" style="background:#fef2f2"><div class="best-val" style="color:#ef4444">'+bestSession.fallos+'</div><div class="best-lbl">FALLOS</div></div>'
+    +'<div class="best-cell" style="background:#fffbeb"><div class="best-val" style="color:#f59e0b">'+bestSession.racha+'</div><div class="best-lbl">RACHA MÁX.</div></div>'
+    +'<div class="best-cell" style="background:#eff6ff"><div class="best-val" style="color:#0ea5e9;font-size:1.1rem">'+tStr+'</div><div class="best-lbl">TIEMPO</div></div>'
+    +'</div>';
+}
+
+// ═══════════════════════════════════════════════
+// CALIBRATION
+// ═══════════════════════════════════════════════
+function startCalibration() {
+  if(calibMode){stopCalibration();return;}
+  calibMode=true; calibQueue=[...ELEMENTS]; calibIdx=0; calibResults={}; calibLinePoints=[];
+  calibDots.forEach(d=>d.remove()); calibDots=[];
+  stopTimer();
+  document.getElementById('calibBtn').classList.add('active');
+  document.getElementById('calibBtn').textContent='⏹ Detener';
+  document.getElementById('calibBanner').classList.add('active');
+  document.getElementById('calibTotal').textContent=calibQueue.length;
+  showCalibTarget();
+}
+function stopCalibration() {
+  calibMode=false;
+  document.getElementById('calibBtn').classList.remove('active');
+  document.getElementById('calibBtn').textContent='📍 Calibrar zonas';
+  document.getElementById('calibBanner').classList.remove('active');
+  calibDots.forEach(d=>d.remove()); calibDots=[];
+}
+function showCalibTarget() {
+  if(calibIdx>=calibQueue.length){finishCalibration();return;}
+  const el=calibQueue[calibIdx];
+  document.getElementById('calibTarget').textContent=el.name+(el.tipo==='line'?' (varios clics, luego Siguiente →)':'');
+  document.getElementById('calibIdx').textContent=calibIdx+1;
+}
+function handleCalibClick(px,py) {
+  const el=calibQueue[calibIdx];
+  const map=document.getElementById('mapContainer');
+  const w=document.createElement('div'); w.className='calib-dot';
+  w.style.left=px+'%'; w.style.top=py+'%';
+  const inn=document.createElement('div'); inn.className='calib-dot-inner';
+  w.appendChild(inn); map.appendChild(w); calibDots.push(w);
+  if(el.tipo==='point') {
+    calibResults[el.id]={tipo:'point',x:Math.round(px*10)/10,y:Math.round(py*10)/10,r:el.r};
+    calibIdx++; calibLinePoints=[]; showCalibTarget();
+  } else {
+    calibLinePoints.push([Math.round(px*10)/10,Math.round(py*10)/10]);
+    document.getElementById('calibTarget').textContent=el.name+' — '+calibLinePoints.length+' punto(s). Pulsa Siguiente →';
+    if(!document.getElementById('calibNextBtn')) {
+      const btn=document.createElement('button'); btn.id='calibNextBtn';
+      btn.textContent='Siguiente →';
+      btn.style.cssText='background:#06d6a0;border:none;border-radius:6px;color:white;font-weight:800;cursor:pointer;padding:2px 10px;font-size:0.8rem;margin-left:8px';
+      btn.onclick=advanceCalibLine;
+      document.getElementById('calibBanner').appendChild(btn);
+    }
+  }
+}
+function advanceCalibLine() {
+  const el=calibQueue[calibIdx];
+  if(calibLinePoints.length>=2) calibResults[el.id]={tipo:'line',points:[...calibLinePoints],r:el.r};
+  calibLinePoints=[]; calibIdx++;
+  const btn=document.getElementById('calibNextBtn'); if(btn) btn.remove();
+  showCalibTarget();
+}
+function skipCalibItem() {
+  const el=calibQueue[calibIdx];
+  if(el&&el.tipo==='line'){calibLinePoints=[];const b=document.getElementById('calibNextBtn');if(b)b.remove();}
+  calibIdx++; showCalibTarget();
+}
+function finishCalibration() {
+  stopCalibration();
+  for(const el of ELEMENTS){const r=calibResults[el.id];if(!r)continue;if(r.tipo==='point'){el.x=r.x;el.y=r.y;}else{el.points=r.points;}}
+  setupZones();
+  if(debugMode){document.querySelectorAll('.click-zone,.click-segment').forEach(z=>z.classList.add('debug-zone'));document.querySelectorAll('.debug-label').forEach(l=>l.style.display='block');}
+  const lines=ELEMENTS.map(el=>{
+    if(el.tipo==='point') return '  { id:"'+el.id+'", name:"'+el.name+'", cat:"'+el.cat+'", tipo:"point", x:'+el.x+', y:'+el.y+', r:'+el.r+' }';
+    return '  { id:"'+el.id+'", name:"'+el.name+'", cat:"'+el.cat+'", tipo:"line", points:'+JSON.stringify(el.points)+', r:'+el.r+' }';
+  });
+  document.getElementById('calibText').value=lines.join(',\n');
+  document.getElementById('calibModal').classList.add('active');
+}
+function copyCalib() {
+  const ta=document.getElementById('calibText'); ta.select();
+  try{navigator.clipboard.writeText(ta.value);}catch(e){document.execCommand('copy');}
+  document.querySelector('.btn-copy').textContent='✅ Copiado!';
+}
+function closeCalib() {
+  document.getElementById('calibModal').classList.remove('active');
+  document.querySelector('.btn-copy').textContent='📋 Copiar';
+  startGame();
+}
+
+window.addEventListener('load',()=>{setupMapClick();startGame();});
+</script>
+</body>
+</html>
