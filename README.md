@@ -76,10 +76,6 @@ La aplicación está diseñada bajo el principio **Zero-Setup / Single-File App*
 ```text
 Materiales-Repaso-Primaria/
 ├── index.html                   # Aplicación web completa y autocontenida (archivo principal)
-├── mapa plastilina.jpg          # Imagen base original del relieve físico en plastilina
-├── mapa acuarela.jpg            # Material gráfico auxiliar
-├── mapa auxiliar rios.png       # Trazado auxiliar de hidrografía
-├── Antiguo Repaso geografia...  # Prototipo inicial de referencia
 └── README.md                    # Documentación del proyecto
 ```
 
